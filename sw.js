@@ -1,4 +1,6 @@
 var cacheName = 'my-demo-app_02';
+var dataCacheName = 'my-demo-app-data_01';
+
 var filesToCache = [
 	'/style.css',
 	'/index.js',
@@ -36,7 +38,20 @@ self.addEventListener('fetch', function (e) {
 	console.log('[ServiceWorker] Fetch', e.request.url);
 	e.respondWith(
 		caches.match(e.request).then(function (response) {
-			return response || fetch(e.request);
+			if(response){
+				console.log('cache response');
+				return response;
+			}else{
+				return fetch(e.request).then(function(apiResponse){
+					console.log('Server response');
+					var apiResClone = apiResponse.clone();
+					caches.open(dataCacheName).then(function (cache1) {
+						console.log('API response Caching');
+						cache1.put(e.request, apiResClone);
+					});
+					return apiResponse;
+				});
+			}
 		})
 	);
 });
